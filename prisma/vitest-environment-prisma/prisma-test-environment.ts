@@ -5,7 +5,7 @@ export default <Environment>{
   async setup() {
     console.log('Executou')
     return {
-      teardown() {},
+      async teardown() {},
     }
   },
 }
