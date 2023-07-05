@@ -1,13 +1,14 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
-import { makeCreateGymUseCase } from '@/use-cases/factories/make-create-gym-use-case'
+import { makeCheckInUseCase } from '@/use-cases/factories/make-check-in-use-case'
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
-  const createGymBodySchema = z.object({
-    title: z.string(),
-    description: z.string().nullable(),
-    phone: z.string().nullable(),
+  const createCheckInParamsSchema = z.object({
+    gymId: z.string().uuid(),
+  })
+
+  const createCheckInBodySchema = z.object({
     latitude: z.number().refine((value) => {
       return Math.abs(value) <= 90
     }),
@@ -16,17 +17,17 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     }),
   })
 
-  const { title, description, phone, latitude, longitude } =
-    createGymBodySchema.parse(request.body)
+  const { gymId } = createCheckInParamsSchema.parse(request.params)
 
-  const createGymUseCase = makeCreateGymUseCase()
+  const { latitude, longitude } = createCheckInBodySchema.parse(request.body)
 
-  await createGymUseCase.execute({
-    title,
-    description,
-    phone,
-    latitude,
-    longitude,
+  const checkInUseCase = makeCheckInUseCase()
+
+  await checkInUseCase.execute({
+    gymId,
+    userId: request.user.sub,
+    userLatitude: latitude,
+    userLongitude: longitude,
   })
 
   return reply.status(201).send()
